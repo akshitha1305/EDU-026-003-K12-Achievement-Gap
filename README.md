@@ -118,7 +118,7 @@ OUTPUT_DIR = "/content/" # Save results here
 
 ```bash
 # 1. Clone the repository
-git clone git clone https://github.com/akshitha1305/EDU-026-003-K12-Achievement-Gap.git
+git clone https://github.com/akshitha1305/EDU-026-003-K12-Achievement-Gap.git
 cd EDU-026-003
 
 # 2. Install dependencies
