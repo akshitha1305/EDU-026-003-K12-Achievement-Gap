@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K-12 Achievement Gap Early Warning System | EDU-026-003</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: Georgia, 'Times New Roman', serif; background: #fafaf8; }
+.header { background: #1a1a2e; padding: 22px 28px; color: #fff; }
+.header h1 { font-family: 'Trebuchet MS', sans-serif; font-size: 20px; font-weight: 700; }
+.header p { font-size: 11px; opacity: 0.6; margin-top: 4px; font-family: sans-serif; }
+.tabs { display: flex; background: #fff; border-bottom: 2px solid #e8e8e4; overflow-x: auto; }
+.tab { padding: 11px 20px; border: none; cursor: pointer; font-weight: 700; font-size: 11.5px; font-family: sans-serif; letter-spacing: 0.3px; text-transform: uppercase; background: transparent; color: #777; transition: all 0.15s; white-space: nowrap; }
+.tab.active { background: #1a1a2e; color: #fff; }
+.content { padding: 18px 24px; max-width: 1080px; }
+.panel { display: none; }
+.panel.active { display: block; }
+.stats { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+.stat { flex: 1; min-width: 140px; background: #fff; border-radius: 8px; padding: 13px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+.stat-label { font-size: 9.5px; color: #999; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; font-family: sans-serif; }
+.stat-val { font-size: 28px; font-weight: 800; color: #1a1a2e; margin-top: 3px; font-family: sans-serif; }
+.stat-sub { font-size: 10px; color: #bbb; margin-top: 1px; font-family: sans-serif; }
+.card { background: #fff; border-radius: 8px; padding: 18px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); margin-bottom: 14px; }
+.card-title { font-weight: 700; font-size: 14px; margin-bottom: 12px; font-family: sans-serif; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+table { width: 100%; border-collapse: collapse; font-size: 11px; font-family: sans-serif; }
+th { background: #f8f8f6; padding: 9px 10px; text-align: left; font-weight: 700; border-bottom: 2px solid #e0e0dc; }
+th.r { text-align: right; }
+td { padding: 8px 10px; border-bottom: 1px solid #f0f0ec; }
+td.r { text-align: right; }
+.risk-high { color: #dc2626; font-weight: 700; }
+.risk-med { color: #d97706; font-weight: 700; }
+.risk-low { color: #059669; font-weight: 700; }
+.badge { background: #fecaca; color: #991b1b; padding: 3px 10px; border-radius: 10px; font-size: 10px; font-weight: 700; font-family: sans-serif; }
+.school-item { padding: 14px 0; border-bottom: 1px solid #f0f0ec; }
+.school-name { font-weight: 700; font-size: 13.5px; font-family: sans-serif; }
+.school-meta { font-size: 11px; color: #888; margin-top: 2px; font-family: sans-serif; }
+.school-stats { display: flex; gap: 18px; margin-top: 8px; font-size: 11px; font-family: sans-serif; }
+.school-factors { margin-top: 8px; background: #fef2f2; padding: 8px 12px; border-radius: 6px; font-size: 11px; color: #7f1d1d; line-height: 1.5; font-family: sans-serif; border-left: 3px solid #fca5a5; }
+.info-box { background: #f0f7ed; border-radius: 8px; padding: 14px; border: 1px solid #c5dfc0; font-size: 12px; color: #2d5a27; line-height: 1.6; font-family: sans-serif; margin-top: 14px; }
+.example-box { margin-top: 14px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 14px; font-size: 12px; color: #14532d; line-height: 1.6; }
+.cm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; text-align: center; }
+.cm-cell { padding: 12px; border-radius: 6px; }
+.cm-val { font-size: 20px; font-weight: 800; font-family: sans-serif; }
+.cm-label { font-size: 10px; color: #666; font-family: sans-serif; margin-top: 2px; }
+.chart-box { position: relative; height: 320px; margin-bottom: 10px; }
+.shap-bar { display: flex; align-items: center; margin-bottom: 6px; font-family: sans-serif; font-size: 11px; }
+.shap-label { width: 130px; text-align: right; padding-right: 10px; color: #555; }
+.shap-fill { height: 18px; background: #1a1a2e; border-radius: 0 3px 3px 0; transition: width 0.5s; }
+.shap-val { margin-left: 6px; color: #888; font-size: 10px; }
+.footer { text-align: center; padding: 14px; color: #ccc; font-size: 10px; border-top: 1px solid #eee; font-family: sans-serif; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Louisiana K-12 Achievement Gap Early Warning System</h1>
+  <p>EDU-026-003 | CSC 580 | Akshitha Merugu | 330,279 Real LEAP Records | 2019, 2022-2025</p>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab(0)">Overview</button>
+  <button class="tab" onclick="showTab(1)">Achievement Gaps</button>
+  <button class="tab" onclick="showTab(2)">Model Performance</button>
+  <button class="tab" onclick="showTab(3)">School Drill-Down</button>
+  <button class="tab" onclick="showTab(4)">SHAP Explainability</button>
+</div>
+
+<div class="content">
+
+<!-- ====== OVERVIEW ====== -->
+<div class="panel active" id="tab0">
+  <div class="stats">
+    <div class="stat" style="border-left: 4px solid #3b82f6"><div class="stat-label">Total Records</div><div class="stat-val">330,279</div><div class="stat-sub">5 years of LEAP data</div></div>
+    <div class="stat" style="border-left: 4px solid #059669"><div class="stat-label">Test Accuracy</div><div class="stat-val">87.9%</div><div class="stat-sub">Gradient Boosting on 2025</div></div>
+    <div class="stat" style="border-left: 4px solid #d97706"><div class="stat-label">At-Risk Caught</div><div class="stat-val">83.3%</div><div class="stat-sub">2,652 of 3,185 groups</div></div>
+    <div class="stat" style="border-left: 4px solid #7c3aed"><div class="stat-label">ROC-AUC</div><div class="stat-val">0.946</div><div class="stat-sub">Test set performance</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Prediction Outcomes (2025)</div>
+      <div style="height:240px"><canvas id="cmChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Key Findings</div>
+      <div style="font-size:12.5px;line-height:1.75;color:#444">
+        <p>The early warning system correctly flagged <b>2,652 out of 3,185</b> at-risk school-subgroups on unseen 2025 LEAP data, achieving <b>83.3% operational recall</b>.</p>
+        <p style="margin-top:8px">English Learners face the highest risk at <b>91.7%</b>. Students with Disabilities are at <b>72.9%</b>.</p>
+        <p style="margin-top:8px">Black students are <b>3.7x more likely</b> to be at-risk than White students (32.0% vs 8.6%).</p>
+        <p style="margin-top:8px">ELA Mastery rate is the strongest predictor (SHAP = 1.21).</p>
+      </div>
+    </div>
+  </div>
+  <div class="info-box"><b>What this means for educators:</b> Instead of waiting until summer to find out which students struggled, this system tells you at the START of the school year which groups need help. Each prediction comes with plain-language reasons why.</div>
+</div>
+
+<!-- ====== ACHIEVEMENT GAPS ====== -->
+<div class="panel" id="tab1">
+  <div class="card">
+    <div class="card-title">Achievement Gap by Subgroup (Real 2025 LEAP Data)</div>
+    <div style="height:350px"><canvas id="gapChart"></canvas></div>
+  </div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Subgroup</th><th class="r">ELA Unsat.</th><th class="r">Math Unsat.</th><th class="r">At-Risk %</th><th class="r">Avg Risk Score</th><th class="r">Schools</th></tr></thead>
+      <tbody>
+        <tr style="background:#fef2f2"><td><b>English Learner</b></td><td class="r">40.3%</td><td class="r">32.3%</td><td class="r risk-high">91.7%</td><td class="r">0.92</td><td class="r">374</td></tr>
+        <tr style="background:#fef2f2"><td><b>Students w/ Disabilities</b></td><td class="r">26.8%</td><td class="r">31.8%</td><td class="r risk-high">72.9%</td><td class="r">0.78</td><td class="r">946</td></tr>
+        <tr style="background:#fef2f2"><td><b>Homeless</b></td><td class="r">21.5%</td><td class="r">28.3%</td><td class="r risk-high">66.7%</td><td class="r">0.63</td><td class="r">204</td></tr>
+        <tr><td><b>Hispanic/Latino</b></td><td class="r">18.1%</td><td class="r">16.4%</td><td class="r risk-med">43.0%</td><td class="r">0.42</td><td class="r">618</td></tr>
+        <tr><td><b>Black/African American</b></td><td class="r">14.1%</td><td class="r">19.3%</td><td class="r risk-med">32.0%</td><td class="r">0.38</td><td class="r">958</td></tr>
+        <tr><td><b>Econ. Disadvantaged</b></td><td class="r">13.7%</td><td class="r">17.3%</td><td class="r risk-med">27.1%</td><td class="r">0.32</td><td class="r">1083</td></tr>
+        <tr><td><b>Total Population</b></td><td class="r">12.5%</td><td class="r">15.9%</td><td class="r">23.6%</td><td class="r">0.28</td><td class="r">1083</td></tr>
+        <tr><td><b>White</b></td><td class="r">8.0%</td><td class="r">9.9%</td><td class="r risk-low">8.6%</td><td class="r">0.10</td><td class="r">851</td></tr>
+        <tr><td><b>Asian</b></td><td class="r">5.8%</td><td class="r">5.2%</td><td class="r risk-low">5.2%</td><td class="r">0.07</td><td class="r">173</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ====== MODEL PERFORMANCE ====== -->
+<div class="panel" id="tab2">
+  <div class="card-title" style="margin-bottom:14px">Model Comparison (Test Set: 2025)</div>
+  <div class="grid2" style="margin-bottom:14px">
+    <div class="card" style="border-top:3px solid #94a3b8">
+      <div style="display:flex;justify-content:space-between"><b style="font-family:sans-serif;font-size:13px">Logistic Regression</b><span style="font-size:9px;padding:2px 8px;border-radius:8px;background:#f1f5f9;color:#64748b;font-weight:700;font-family:sans-serif">Baseline</span></div>
+      <div class="grid2" style="margin-top:10px;font-size:11px;font-family:sans-serif"><div>Accuracy: <b>87.6%</b></div><div>ROC-AUC: <b>0.9418</b></div><div>Recall: <b>83.0%</b></div><div>Precision: <b>76.4%</b></div></div>
+    </div>
+    <div class="card" style="border-top:3px solid #3b82f6">
+      <div style="display:flex;justify-content:space-between"><b style="font-family:sans-serif;font-size:13px">Random Forest</b><span style="font-size:9px;padding:2px 8px;border-radius:8px;background:#f1f5f9;color:#64748b;font-weight:700;font-family:sans-serif">Comparison</span></div>
+      <div class="grid2" style="margin-top:10px;font-size:11px;font-family:sans-serif"><div>Accuracy: <b>88.2%</b></div><div>ROC-AUC: <b>0.9467</b></div><div>Recall: <b>84.1%</b></div><div>Precision: <b>77.3%</b></div></div>
+    </div>
+    <div class="card" style="border-top:3px solid #059669">
+      <div style="display:flex;justify-content:space-between"><b style="font-family:sans-serif;font-size:13px">Gradient Boosting (XGBoost)</b><span style="font-size:9px;padding:2px 8px;border-radius:8px;background:#d1fae5;color:#065f46;font-weight:700;font-family:sans-serif">Primary</span></div>
+      <div class="grid2" style="margin-top:10px;font-size:11px;font-family:sans-serif"><div>Accuracy: <b>87.9%</b></div><div>ROC-AUC: <b>0.9462</b></div><div>Recall: <b>83.3%</b></div><div>Precision: <b>77.1%</b></div></div>
+    </div>
+    <div class="card" style="border-top:3px solid #7c3aed">
+      <div class="card-title">Confusion Matrix (XGBoost)</div>
+      <div class="cm-grid">
+        <div class="cm-cell" style="background:#d1fae5"><div class="cm-val" style="color:#065f46">6,936</div><div class="cm-label">True Negative</div></div>
+        <div class="cm-cell" style="background:#fef3c7"><div class="cm-val" style="color:#92400e">787</div><div class="cm-label">False Positive</div></div>
+        <div class="cm-cell" style="background:#fee2e2"><div class="cm-val" style="color:#991b1b">533</div><div class="cm-label">False Negative</div></div>
+        <div class="cm-cell" style="background:#dbeafe"><div class="cm-val" style="color:#1e40af">2,652</div><div class="cm-label">True Positive</div></div>
+      </div>
+      <div style="margin-top:8px;font-size:10px;color:#666;text-align:center;font-family:sans-serif">Operational: 2,652/3,185 at-risk caught = 83.3%</div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SCHOOL DRILL-DOWN ====== -->
+<div class="panel" id="tab3">
+  <div class="card-title" style="margin-bottom:6px">Highest Risk School-Subgroups (2025)</div>
+  <p style="font-size:11px;color:#666;margin-bottom:14px;font-family:sans-serif">Each entry shows plain-language risk factors, exactly as a teacher or counselor would see them.</p>
+  <div class="card" id="schoolList"></div>
+</div>
+
+<!-- ====== SHAP ====== -->
+<div class="panel" id="tab4">
+  <div class="card">
+    <div class="card-title">SHAP Feature Importance (What Drives Risk Predictions)</div>
+    <p style="font-size:10.5px;color:#888;margin-bottom:14px;font-family:sans-serif">Mean absolute SHAP value: how much each feature shifts predictions on average. Higher = more important.</p>
+    <div id="shapBars"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">What This Means for Educators (Plain Language)</div>
+    <div style="font-size:12.5px;line-height:1.8;color:#444">
+      <p><b>ELA Mastery Rate</b> is the single most important factor (SHAP = 1.21). Schools where fewer students reach Mastery in English Language Arts are most likely to be flagged.</p>
+      <p style="margin-top:10px"><b>School Performance Score</b> (SHAP = 0.60) captures overall school quality. A declining SPS signals trouble even if individual subject scores look okay.</p>
+      <p style="margin-top:10px"><b>Subgroup identity + minority + disadvantaged flags</b> (combined SHAP = 0.69) confirm that demographic factors compound academic risk.</p>
+    </div>
+    <div class="example-box">
+      <b style="font-family:sans-serif">Example: What a Teacher Would See</b><br><br>
+      "Students with Disabilities at Southside Elementary (East Carroll Parish) are flagged as <b>HIGH RISK</b>. 
+      Top factors: ELA mastery rate is very low (50% unsatisfactory), the school's SPS is 29 (state average is 75), 
+      and East Carroll Parish has the highest poverty rate in Louisiana. 
+      <b>Recommended action:</b> Prioritize this subgroup for immediate reading intervention and additional special education support."
+    </div>
+  </div>
+</div>
+
+</div>
+
+<div class="footer">EDU-026-003 | CSC 580 Advanced Data Mining | Louisiana Tech University | Spring 2026 | Built with real Louisiana LEAP 2025 data</div>
+
+<script>
+// Tab switching
+function showTab(n) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab'+n).classList.add('active');
+  document.querySelectorAll('.tab')[n].classList.add('active');
+  if(n===0 && !window.cmDone) initCM();
+  if(n===1 && !window.gapDone) initGap();
+}
+
+// Confusion Matrix Chart
+function initCM() {
+  window.cmDone=true;
+  new Chart(document.getElementById('cmChart'), {
+    type:'doughnut',
+    data:{labels:['Correctly Safe (6,936)','Correctly Caught (2,652)','False Alarm (787)','Missed (533)'],
+      datasets:[{data:[6936,2652,787,533],backgroundColor:['#10b981','#3b82f6','#f59e0b','#ef4444'],borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10,family:'sans-serif'}}}}}
+  });
+}
+
+// Achievement Gap Chart
+function initGap() {
+  window.gapDone=true;
+  var labels=['English\nLearner','Students w/\nDisabilities','Homeless','Hispanic/\nLatino','Black/African\nAmerican','Econ.\nDisadv.','Total\nPop.','White','Asian'];
+  new Chart(document.getElementById('gapChart'), {
+    type:'bar',
+    data:{labels:labels,datasets:[
+      {label:'% At-Risk',data:[91.7,72.9,66.7,43,32,27.1,23.6,8.6,5.2],backgroundColor:'#dc2626'},
+      {label:'% ELA Unsatisfactory',data:[40.3,26.8,21.5,18.1,14.1,13.7,12.5,8,5.8],backgroundColor:'#2563eb'},
+      {label:'% Math Unsatisfactory',data:[32.3,31.8,28.3,16.4,19.3,17.3,15.9,9.9,5.2],backgroundColor:'#d97706'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,title:{display:true,text:'Percentage (%)',font:{size:11}}},x:{ticks:{font:{size:9}}}},plugins:{legend:{labels:{font:{size:10,family:'sans-serif'}}}}}
+  });
+}
+
+// School Drill-Down
+var schools=[
+  {school:"IDEA Bridge",parish:"East Baton Rouge",sub:"Students w/ Disabilities",ela:52,math:61,sps:38,factors:"Very low ELA mastery, 52% ELA and 61% math unsatisfactory, SPS 38 (state avg 75)"},
+  {school:"IDEA Bridge",parish:"East Baton Rouge",sub:"English Learner",ela:59,math:47,sps:38,factors:"59% ELA unsatisfactory, limited English proficiency compounding gaps, SPS well below average"},
+  {school:"IDEA Bridge",parish:"East Baton Rouge",sub:"Econ. Disadvantaged",ela:36,math:42,sps:38,factors:"High unsatisfactory rates across both subjects, poverty compounding academic challenges"},
+  {school:"MLK Charter School",parish:"Orleans",sub:"Students w/ Disabilities",ela:58,math:63,sps:45,factors:"58% ELA and 63% math unsatisfactory, disability support gaps, SPS 45 vs state avg 75"},
+  {school:"Rayville Elementary",parish:"Richland",sub:"Students w/ Disabilities",ela:42,math:44,sps:39,factors:"Rural parish, high unsatisfactory rates, limited resources, very low SPS"},
+  {school:"Wright Elementary",parish:"Madison",sub:"Students w/ Disabilities",ela:22,math:47,sps:34,factors:"SPS only 34, 47% math unsatisfactory, high-poverty rural parish"},
+  {school:"Morehouse Elementary",parish:"Morehouse",sub:"Students w/ Disabilities",ela:44,math:65,sps:32,factors:"65% math unsatisfactory (highest in sample), SPS only 32, rural high-poverty area"},
+  {school:"Morehouse Elementary",parish:"Morehouse",sub:"Econ. Disadvantaged",ela:37,math:57,sps:32,factors:"Poverty and low school performance compounding, 57% math unsatisfactory"},
+  {school:"MAX Charter School",parish:"Caddo",sub:"Students w/ Disabilities",ela:32,math:61,sps:35,factors:"61% math unsatisfactory, disability support gaps, below-average SPS"},
+  {school:"Southside Elementary",parish:"East Carroll",sub:"Students w/ Disabilities",ela:50,math:55,sps:29,factors:"Lowest SPS in sample (29), East Carroll is highest-poverty parish in Louisiana"},
+];
+var html='';
+schools.forEach(function(s){
+  html+='<div class="school-item"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div class="school-name">'+s.school+'</div><div class="school-meta">'+s.parish+' Parish | '+s.sub+'</div></div><span class="badge">HIGH RISK</span></div><div class="school-stats"><span>ELA Unsat: <b style="color:#dc2626">'+s.ela+'%</b></span><span>Math Unsat: <b style="color:#d97706">'+s.math+'%</b></span><span>SPS: <b>'+s.sps+'</b> <span style="color:#bbb">(avg: 75)</span></span></div><div class="school-factors"><b>Why flagged:</b> '+s.factors+'</div></div>';
+});
+document.getElementById('schoolList').innerHTML=html;
+
+// SHAP Bars
+var shapData=[
+  {f:"ELA Mastery Rate",v:1.21},{f:"ELA Proficiency",v:0.74},{f:"School Perf. Score",v:0.60},
+  {f:"Math Mastery Rate",v:0.43},{f:"Subgroup Identity",v:0.25},{f:"Disadvantaged Flag",v:0.23},
+  {f:"Math Proficiency",v:0.22},{f:"Minority Flag",v:0.21},{f:"School Type",v:0.09}
+];
+var maxV=1.21;
+var shapHtml='';
+shapData.forEach(function(s){
+  var w=Math.round(s.v/maxV*100);
+  shapHtml+='<div class="shap-bar"><div class="shap-label">'+s.f+'</div><div class="shap-fill" style="width:'+w+'%"></div><div class="shap-val">'+s.v.toFixed(2)+'</div></div>';
+});
+document.getElementById('shapBars').innerHTML=shapHtml;
+
+// Init first tab chart
+setTimeout(initCM, 100);
+</script>
+</body>
+</html>
